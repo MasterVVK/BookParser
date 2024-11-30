@@ -31,8 +31,17 @@ class ChapterParser:
                 chapter_body = ''.join(str(tag) for tag in chapter_body_tag.find_all(['p', 'h2', 'h3', 'br']))
                 chapter_body = chapter_body.replace('\n', '').strip()
 
+                if not chapter_body:  # Проверка на пустое содержимое
+                    print(f"Текст главы отсутствует для {url}. Пропускаем.")
+                    return None
+
                 # Сохраняем главу в базу данных
-                chapter = DatabaseManager.save_chapter_to_db(book, chapter_title, chapter_body)
+                chapter = DatabaseManager.save_chapter_to_db(
+                    book=book,
+                    chapter_number=self.chapter_count + 1,
+                    chapter_title=chapter_title,
+                    content=chapter_body
+                )
 
                 # Обрабатываем текст главы через LLM
                 processed_content = LLMProcessor.process_text(chapter_body)

@@ -18,6 +18,7 @@ class Chapter(Base):
 
     id = Column(Integer, primary_key=True)
     book_id = Column(Integer, ForeignKey('books.id'), nullable=False)
+    chapter_number = Column(Integer, nullable=False)  # Номер главы
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     processed_content = Column(Text, nullable=True)
@@ -32,6 +33,6 @@ engine = create_engine("sqlite:///books.db", echo=True)
 # Создание таблиц, если они ещё не существуют
 Base.metadata.create_all(engine)
 
-# Создание сессии для работы с базой данных
+# Настройка сессии
 Session = sessionmaker(bind=engine)
 session = Session()
