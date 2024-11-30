@@ -4,18 +4,43 @@ class DatabaseManager:
     """Класс для управления операциями с базой данных."""
 
     @staticmethod
-    def save_book_to_db(book_title, start_url, total_chapters=0):
-        """Сохранить книгу в базу данных или обновить её, если она уже существует."""
+    def save_book_to_db(book_title, start_url, total_chapters=0, excluded_texts=None):
+        """
+        Сохранить книгу в базу данных или обновить её, если она уже существует.
+        :param book_title: Название книги
+        :param start_url: URL для начала парсинга книги
+        :param total_chapters: Общее количество глав (по умолчанию 0)
+        :param excluded_texts: Список исключаемых текстов (по умолчанию None)
+        :return: Объект книги
+        """
         book = session.query(Book).filter_by(title=book_title).first()
         if not book:
-            book = Book(title=book_title, start_url=start_url, total_chapters=total_chapters)
+            book = Book(
+                title=book_title,
+                start_url=start_url,
+                total_chapters=total_chapters,
+                excluded_texts=excluded_texts or []
+            )
             session.add(book)
+        else:
+            # Обновляем данные книги
+            book.start_url = start_url
+            book.total_chapters = total_chapters
+            if excluded_texts is not None:
+                book.excluded_texts = excluded_texts
         session.commit()
         return book
 
     @staticmethod
     def save_chapter_to_db(book, chapter_number, chapter_title, content):
-        """Сохранить или обновить главу в базе данных."""
+        """
+        Сохранить или обновить главу в базе данных.
+        :param book: Объект книги
+        :param chapter_number: Номер главы
+        :param chapter_title: Название главы
+        :param content: Содержимое главы
+        :return: Объект главы
+        """
         chapter = session.query(Chapter).filter_by(book_id=book.id, chapter_number=chapter_number).first()
         if chapter:
             # Обновляем существующую главу
@@ -38,7 +63,11 @@ class DatabaseManager:
 
     @staticmethod
     def mark_chapter_as_processed(chapter_id, processed_content):
-        """Обновить статус главы как обработанной и сохранить обработанный текст."""
+        """
+        Обновить статус главы как обработанной и сохранить обработанный текст.
+        :param chapter_id: ID главы
+        :param processed_content: Обработанный текст
+        """
         chapter = session.query(Chapter).filter_by(id=chapter_id).first()
         if chapter:
             chapter.processed = True
@@ -47,5 +76,8 @@ class DatabaseManager:
 
     @staticmethod
     def get_unprocessed_chapters():
-        """Получить все главы, которые ещё не были обработаны."""
+        """
+        Получить все главы, которые ещё не были обработаны.
+        :return: Список необработанных глав
+        """
         return session.query(Chapter).filter_by(processed=False).all()

@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.types import JSON
 
 Base = declarative_base()
 
@@ -11,6 +12,7 @@ class Book(Base):
     title = Column(String, nullable=False)
     start_url = Column(String, nullable=False)
     total_chapters = Column(Integer, default=0)
+    excluded_texts = Column(JSON, nullable=True)  # Список исключаемых текстов
     chapters = relationship("Chapter", back_populates="book")
 
 class Chapter(Base):
@@ -18,7 +20,7 @@ class Chapter(Base):
 
     id = Column(Integer, primary_key=True)
     book_id = Column(Integer, ForeignKey('books.id'), nullable=False)
-    chapter_number = Column(Integer, nullable=False)  # Номер главы
+    chapter_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     processed_content = Column(Text, nullable=True)
@@ -28,7 +30,7 @@ class Chapter(Base):
     book = relationship("Book", back_populates="chapters")
 
 # Создание подключения к базе данных
-engine = create_engine("sqlite:///books.db", echo=True)
+engine = create_engine("sqlite:///books.db", echo=False)
 
 # Создание таблиц, если они ещё не существуют
 Base.metadata.create_all(engine)

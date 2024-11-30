@@ -27,11 +27,11 @@ class ChapterParser:
             chapter_body_tag = soup.find('div', class_='entry-content')
 
             if chapter_body_tag:
-                self.clean_chapter_body(chapter_body_tag)
+                self.clean_chapter_body(chapter_body_tag, book.excluded_texts)
                 chapter_body = ''.join(str(tag) for tag in chapter_body_tag.find_all(['p', 'h2', 'h3', 'br']))
                 chapter_body = chapter_body.replace('\n', '').strip()
 
-                if not chapter_body:  # Проверка на пустое содержимое
+                if not chapter_body:
                     print(f"Текст главы отсутствует для {url}. Пропускаем.")
                     return None
 
@@ -69,7 +69,13 @@ class ChapterParser:
             return None
 
     @staticmethod
-    def clean_chapter_body(chapter_body_tag):
-        """Удаляет нежелательные элементы из текста главы."""
+    def clean_chapter_body(chapter_body_tag, excluded_texts):
+        """Удаляет нежелательные элементы и тексты из тела главы."""
         for unwanted in chapter_body_tag.find_all(['a', 'script', 'style', 'iframe', 'ins']):
             unwanted.decompose()
+
+        # Удаляем тексты из excluded_texts
+        if excluded_texts:
+            for unwanted_text in excluded_texts:
+                for unwanted in chapter_body_tag.find_all(string=lambda text: unwanted_text in text):
+                    unwanted.extract()
