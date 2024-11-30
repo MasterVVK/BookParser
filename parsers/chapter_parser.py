@@ -1,3 +1,4 @@
+import time
 from fetcher.web_page_fetcher import WebPageFetcher
 from database.database_manager import DatabaseManager
 from llm_processor.llm_processor import LLMProcessor
@@ -6,13 +7,18 @@ from bs4 import BeautifulSoup
 class ChapterParser:
     """Класс для парсинга глав книги."""
 
-    def __init__(self, max_chapters=2):
+    def __init__(self, max_chapters=2, delay=2):
         self.max_chapters = max_chapters
         self.chapter_count = 0
+        self.delay = delay  # Задержка между запросами
 
     def parse_chapter(self, url, book):
         """Парсинг одной главы и сохранение в базу данных."""
         try:
+            if self.chapter_count >= self.max_chapters:
+                print("Достигнуто максимальное количество глав.")
+                return None
+
             html_content = WebPageFetcher.fetch_webpage_content(url)
             soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -35,7 +41,19 @@ class ChapterParser:
                 DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
 
                 self.chapter_count += 1
-            return soup
+                print(f'Глава "{chapter_title}" успешно добавлена.')
+            else:
+                print(f'Текст главы не найден для {url}')
+
+            # Найти URL следующей главы (кнопка с rel="Вперед")
+            next_button = soup.find('a', rel='Вперед')
+            next_url = next_button['href'] if next_button else None
+
+            # Пауза перед запросом следующей главы
+            print(f'Пауза {self.delay} секунд перед парсингом следующей главы...')
+            time.sleep(self.delay)
+
+            return next_url
 
         except Exception as e:
             print(f'Ошибка при обработке {url}: {e}')
