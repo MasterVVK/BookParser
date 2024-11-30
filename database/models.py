@@ -23,7 +23,7 @@ class Chapter(Base):
     chapter_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    processed_content = Column(Text, nullable=False)
+    processed_content = Column(Text, nullable=True)
     status = Column(Boolean, default=False)
     processed = Column(Boolean, default=False)
 
