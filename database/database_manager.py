@@ -81,3 +81,12 @@ class DatabaseManager:
         :return: Список необработанных глав
         """
         return session.query(Chapter).filter_by(processed=False).all()
+    @staticmethod
+    def get_processed_chapters(book_id, start_chapter=None, end_chapter=None):
+        query = session.query(Chapter).filter_by(book_id=book_id, processed=True)
+        if start_chapter:
+            query = query.filter(Chapter.chapter_number >= start_chapter)
+        if end_chapter:
+            query = query.filter(Chapter.chapter_number <= end_chapter)
+        chapters = query.all()
+        return [(chapter.title, chapter.processed_content) for chapter in chapters]
