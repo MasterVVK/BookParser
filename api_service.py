@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
 from pydantic import BaseModel
-from math import ceil
 from contextlib import asynccontextmanager
+import requests
 from database.models import Book, Chapter
 
 # Конфигурация базы данных
@@ -28,6 +28,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Book Parser API Service", lifespan=lifespan)
 
 # Pydantic схемы
+class BookSchema(BaseModel):
+    id: int
+    title: str
+    start_url: str
+    total_chapters: int
+
+    class Config:
+        from_attributes = True
+
 class ChapterSchema(BaseModel):
     id: int
     chapter_number: int
@@ -37,44 +46,67 @@ class ChapterSchema(BaseModel):
     class Config:
         from_attributes = True
 
-class PaginatedResponse(BaseModel):
-    total_pages: int
-    current_page: int
-    total_items: int
-    items: list[ChapterSchema]
-
-# Эндпоинт: Получение необработанных глав книги с пагинацией
-@app.get("/books/{book_id}/unprocessed-chapters", response_model=PaginatedResponse)
-async def get_unprocessed_chapters(
-    book_id: int,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100)
-):
+# Эндпоинт: Получение списка книг
+@app.get("/books", response_model=list[BookSchema])
+async def get_books():
     async with async_session_maker() as session:
-        # Получить общее количество необработанных глав
-        total_items_query = select(Chapter).where(Chapter.book_id == book_id, Chapter.processed == False)
-        total_items = await session.execute(total_items_query)
-        total_items_count = len(total_items.scalars().all())
+        result = await session.execute(select(Book))
+        books = result.scalars().all()
+        if not books:
+            raise HTTPException(status_code=404, detail="No books found")
+        return books
 
-        # Пагинация
-        total_pages = ceil(total_items_count / page_size)
-        if page > total_pages and total_pages > 0:
-            raise HTTPException(status_code=404, detail="Page not found")
-
-        # Получить главы для текущей страницы
-        offset = (page - 1) * page_size
-        chapters_query = (
+# Эндпоинт: Получение одной необработанной главы книги
+@app.get("/books/{book_id}/unprocessed-chapter", response_model=ChapterSchema)
+async def get_unprocessed_chapter(book_id: int, page: int = Query(1, ge=1)):
+    """
+    Возвращает одну необработанную главу для указанной книги.
+    Параметр page определяет номер главы для выборки.
+    """
+    async with async_session_maker() as session:
+        # Получить все необработанные главы
+        result = await session.execute(
             select(Chapter)
             .where(Chapter.book_id == book_id, Chapter.processed == False)
-            .offset(offset)
-            .limit(page_size)
+            .order_by(Chapter.chapter_number)
         )
-        result = await session.execute(chapters_query)
         chapters = result.scalars().all()
 
-        return PaginatedResponse(
-            total_pages=total_pages,
-            current_page=page,
-            total_items=total_items_count,
-            items=chapters
-        )
+        # Проверяем, существует ли запрошенная страница
+        if page > len(chapters) or len(chapters) == 0:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+
+        # Возвращаем главу на запрошенной странице (номер главы в списке)
+        chapter = chapters[page - 1]
+        return chapter
+
+# Эндпоинт: Обработка одной главы книги
+@app.post("/chapters/{chapter_id}/process")
+async def process_chapter(chapter_id: int):
+    """
+    Обрабатывает одну главу с помощью GPT ассистента.
+    """
+    async with async_session_maker() as session:
+        # Получить главу
+        chapter = await session.get(Chapter, chapter_id)
+        if not chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+
+        if chapter.processed:
+            return {"message": "Chapter is already processed"}
+
+        # Отправить главу на обработку в GPT ассистента
+        gpt_api_url = "http://gpt-assistant-api/endpoint"  # Замените на реальный URL
+        response = requests.post(gpt_api_url, json={"text": chapter.content})
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Error processing chapter")
+
+        processed_text = response.json().get("processed_text")
+
+        # Сохранить обработанный текст в базу данных
+        chapter.processed_content = processed_text
+        chapter.processed = True
+        session.add(chapter)
+        await session.commit()
+
+        return {"message": "Chapter processed successfully"}
