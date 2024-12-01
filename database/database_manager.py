@@ -55,7 +55,7 @@ class DatabaseManager:
                 chapter_number=chapter_number,
                 title=chapter_title,
                 content=content,
-                status=False
+                status=True
             )
             session.add(chapter)
         session.commit()
