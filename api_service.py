@@ -17,13 +17,12 @@ async_session_maker = sessionmaker(
     class_=AsyncSession,
 )
 
-# Pydantic схема для сериализации данных книги
+# Pydantic схема для сериализации данных книги (без excluded_texts)
 class BookSchema(BaseModel):
     id: int
     title: str
     start_url: str
     total_chapters: int
-    excluded_texts: dict | None
 
     class Config:
         from_attributes = True  # Новый параметр вместо orm_mode
