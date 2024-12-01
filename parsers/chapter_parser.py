@@ -44,10 +44,10 @@ class ChapterParser:
                 )
 
                 # Обрабатываем текст главы через LLM
-                processed_content = LLMProcessor.process_text(chapter_body)
+                #processed_content = LLMProcessor.process_text(chapter_body)
 
                 # Обновляем статус и сохраняем обработанный текст
-                DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
+                #DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
 
                 self.chapter_count += 1
                 print(f'Глава "{chapter_title}" успешно добавлена.')
