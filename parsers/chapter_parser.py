@@ -79,3 +79,4 @@ class ChapterParser:
             for unwanted_text in excluded_texts:
                 for unwanted in chapter_body_tag.find_all(string=lambda text: unwanted_text in text):
                     unwanted.extract()
+
