@@ -3,9 +3,10 @@ from httpx_socks import SyncProxyTransport
 from config import GEMINI_API_KEY, PROXY_URL
 
 class GeminiService:
-    def __init__(self):
+    def __init__(self, timeout: int = 30):
         """
-        Инициализация сервиса Gemini с поддержкой SOCKS-прокси.
+        Инициализация сервиса Gemini с поддержкой SOCKS-прокси и пользовательским тайм-аутом.
+        :param timeout: Тайм-аут для HTTP-запросов в секундах (по умолчанию 30 секунд).
         """
         if not GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY отсутствует. Проверьте файл config.py.")
@@ -17,7 +18,7 @@ class GeminiService:
 
         # Настраиваем прокси
         self.transport = SyncProxyTransport.from_url(self.proxy_url)
-        self.client = httpx.Client(transport=self.transport)
+        self.client = httpx.Client(transport=self.transport, timeout=httpx.Timeout(timeout))
 
     def process_text(self, system_prompt: str, user_prompt: str, temperature: float = 0.0, max_output_tokens: int = 8000):
         """
@@ -37,7 +38,7 @@ class GeminiService:
         try:
             response = self.client.post(
                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-                params={"key": self.api_key},  # Передаем API-ключ в параметре URL
+                params={"key": self.api_key},
                 headers={"Content-Type": "application/json"},
                 json={
                     "generationConfig": generation_config,
