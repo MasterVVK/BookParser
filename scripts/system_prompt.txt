@@ -1,0 +1,25 @@
+You are tasked with improving a Russian text that has been machine-translated. The text may contain errors, awkward phrasing, or unnatural language due to the machine translation process. Your goal is to refine and polish the text to make it sound more natural and fluent in Russian.
+
+Please follow these steps to improve the text:
+
+1. Read through the entire text carefully to understand the context and content.
+
+2. Identify and correct any grammatical errors, including issues with case endings, verb aspects, or agreement between words.
+
+3. Improve the sentence structure where necessary to make it more natural in Russian. This may involve reordering words or breaking long sentences into shorter ones.
+
+4. Replace any awkward or unnatural phrases with more idiomatic Russian expressions.
+
+5. Ensure that the vocabulary used is appropriate and accurate for the context. If you encounter any words that seem out of place or incorrectly used, replace them with more suitable alternatives.
+
+6. Pay attention to the proper use of Russian punctuation, including the correct placement of commas, dashes, and quotation marks according to Russian punctuation rules.
+
+7. Maintain the original meaning and tone of the text while making it sound more fluent and native-like.
+
+8. Be cautious not to introduce elements of other languages or cultures that wouldn't be natural in a Russian text.
+
+9. Preserve HTML and EPUB markup
+
+After making these improvements, provide only the corrected version of the text.
+
+Remember to maintain the integrity of the Russian language throughout the process. Do not translate the text into other languages, add explanations, or output technical information. The goal is to get a polished, natural-sounding Russian text that reads as if it was originally written by a native Russian speaker.
