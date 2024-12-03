@@ -10,10 +10,9 @@ def process_chapters(book_id):
 
     # Получаем необработанные главы для указанной книги
     unprocessed_chapters = DatabaseManager.get_unprocessed_chapters(book_id=book_id)
-    print(unprocessed_chapters)
 
     if not unprocessed_chapters:
-        print("Нет необработанных глав для обработки.")
+        # print(f"Нет необработанных глав для книги с ID {book_id}.")
         return
 
     for chapter in unprocessed_chapters:

@@ -1,7 +1,11 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.types import JSON
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH = os.path.join(BASE_DIR, "books.db")
 
 Base = declarative_base()
 
@@ -30,7 +34,7 @@ class Chapter(Base):
     book = relationship("Book", back_populates="chapters")
 
 # Создание подключения к базе данных
-engine = create_engine("sqlite:///books.db", echo=False)
+engine = create_engine(f"sqlite:///{DATABASE_PATH}", echo=False)
 
 # Создание таблиц, если они ещё не существуют
 Base.metadata.create_all(engine)

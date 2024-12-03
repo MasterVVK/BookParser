@@ -77,26 +77,35 @@ class DatabaseManager:
     @staticmethod
     def get_unprocessed_chapters(book_id):
         """
-        Получить необработанные главы (processed=False).
-        :param book_id: ID книги (опционально).
-        :return: Список необработанных глав.
+        Получает необработанные главы книги по ID книги.
+        :param book_id: ID книги
+        :return: Список необработанных глав
         """
-        query = session.query(Chapter).filter(book_id=book_id, processed=False)  # Проверяем processed
-        print(query)
-        if book_id is not None:
-            query = query.filter(Chapter.book_id == book_id)
+        try:
+            # Запрос для выборки глав
+            query = session.query(Chapter).filter(
+                Chapter.book_id == book_id,
+                Chapter.processed == False  # Выбираем только необработанные главы
+            ).order_by(Chapter.chapter_number)  # Сортируем по номеру главы
 
-        chapters = query.all()
+            # Выводим SQL-запрос для отладки
+            # print(f"SQLAlchemy Query: {query}")
 
-        # Для диагностики
-        if not chapters:
-            print("Нет необработанных глав для обработки.")
-        else:
-            print(f"Найдено {len(chapters)} необработанных глав для книги ID {book_id}:")
-            for chapter in chapters:
-                print(f"ID: {chapter.id}, Title: {chapter.title}, Processed: {chapter.processed}")
+            # Выполняем запрос
+            chapters = query.all()
 
-        return chapters
+            # Лог результатов
+            if not chapters:
+                print(f"Нет необработанных глав для книги с ID {book_id}.")
+            else:
+                print(f"Найдено {len(chapters)} необработанных глав для книги ID {book_id}:")
+                for chapter in chapters:
+                    print(f"ID: {chapter.id}, Номер: {chapter.chapter_number}, Название: {chapter.title}")
+
+            return chapters
+        except Exception as e:
+            print(f"Ошибка при выборке необработанных глав для книги ID {book_id}: {e}")
+            return []
 
     @staticmethod
     def get_processed_chapters(book_id, start_chapter=None, end_chapter=None):
