@@ -46,8 +46,8 @@ class DatabaseManager:
             # Обновляем существующую главу
             chapter.title = chapter_title
             chapter.content = content
-            chapter.processed = False
-            chapter.processed_content = None
+            #chapter.processed = False
+            #chapter.processed_content = None
         else:
             # Создаём новую главу
             chapter = Chapter(
@@ -99,8 +99,8 @@ class DatabaseManager:
                 print(f"Нет необработанных глав для книги с ID {book_id}.")
             else:
                 print(f"Найдено {len(chapters)} необработанных глав для книги ID {book_id}:")
-                for chapter in chapters:
-                    print(f"ID: {chapter.id}, Номер: {chapter.chapter_number}, Название: {chapter.title}")
+                # for chapter in chapters:
+                    # print(f"ID: {chapter.id}, Номер: {chapter.chapter_number}, Название: {chapter.title}")
 
             return chapters
         except Exception as e:
