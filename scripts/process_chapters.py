@@ -8,8 +8,9 @@ def process_chapters(book_id):
     """
     gemini = GeminiService()
 
-    # Получаем необработанные главы
-    unprocessed_chapters = DatabaseManager.get_unprocessed_chapters()
+    # Получаем необработанные главы для указанной книги
+    unprocessed_chapters = DatabaseManager.get_unprocessed_chapters(book_id=book_id)
+    print(unprocessed_chapters)
 
     if not unprocessed_chapters:
         print("Нет необработанных глав для обработки.")
@@ -50,6 +51,6 @@ def process_chapters(book_id):
             print(f"Не удалось обработать главу {chapter.chapter_number}.")
 
 if __name__ == "__main__":
-    # ID книги для обработки
-    book_id = 1  # Укажите ID книги
+    # Укажите ID книги для обработки
+    book_id = 1  # Замените на нужный ID книги
     process_chapters(book_id)
