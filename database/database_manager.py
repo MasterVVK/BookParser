@@ -75,12 +75,29 @@ class DatabaseManager:
             session.commit()
 
     @staticmethod
-    def get_unprocessed_chapters():
+    def get_unprocessed_chapters(book_id=None, start_chapter=None, end_chapter=None, order_by="chapter_number"):
         """
-        Получить все главы, которые ещё не были обработаны.
-        :return: Список необработанных глав
+        Получить необработанные главы с возможностью фильтрации и сортировки.
+        :param book_id: ID книги для фильтрации (по умолчанию None — все книги).
+        :param start_chapter: Начальный номер главы (включительно).
+        :param end_chapter: Конечный номер главы (включительно).
+        :param order_by: Поле для сортировки (по умолчанию 'chapter_number').
+        :return: Список необработанных глав.
         """
-        return session.query(Chapter).filter_by(processed=False).all()
+        query = session.query(Chapter).filter_by(book_id=book_id,processed=False)
+        print(query)
+        if book_id is not None:
+            query = query.filter(Chapter.book_id == book_id)
+            print(query)
+        if start_chapter is not None:
+            query = query.filter(Chapter.chapter_number >= start_chapter)
+        if end_chapter is not None:
+            query = query.filter(Chapter.chapter_number <= end_chapter)
+        if order_by:
+            query = query.order_by(getattr(Chapter, order_by).asc())
+
+        return query.all()
+
     @staticmethod
     def get_processed_chapters(book_id, start_chapter=None, end_chapter=None):
         query = session.query(Chapter).filter_by(book_id=book_id, processed=True)
