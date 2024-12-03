@@ -15,29 +15,24 @@ class GeminiService:
 
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
-    async def process_chapter(self, chapter_text: str):
+    async def send_request(self, system_prompt: str, user_prompt: str, temperature: float = 0.0, max_tokens: int = 8000):
         """
-        Обрабатывает текст главы через Gemini API.
-        :param chapter_text: Текст главы для обработки.
+        Отправляет запрос в Gemini API.
+        :param system_prompt: Системный запрос для настройки модели.
+        :param user_prompt: Пользовательский запрос (текст, требующий обработки).
+        :param temperature: Параметр температуры (отвечает за креативность).
+        :param max_tokens: Максимальное количество токенов в ответе.
         :return: Обработанный текст или None в случае ошибки.
         """
         params = {"key": GEMINI_API_KEY}
         headers = {"Content-Type": "application/json"}
 
-        system_prompt = (
-            "You are tasked with improving a Russian text that has been machine-translated. "
-            "The text may contain errors, awkward phrasing, or unnatural language due to the machine translation process. "
-            "Your goal is to refine and polish the text to make it sound more natural and fluent in Russian.\n\n"
-            "Here is the Russian text that needs improvement:\n\n"
-            "<russian_text>\n"
-            "{{RUSSIAN_TEXT}}\n"
-            "</russian_text>\n\n"
-            "Please follow these steps to improve the text..."
-        )
-        user_prompt = system_prompt.replace("{{RUSSIAN_TEXT}}", chapter_text)
-
         payload = {
-            "contents": [{"parts": [{"text": user_prompt}]}]
+            "contents": [{"parts": [{"text": system_prompt}, {"text": user_prompt}]}],
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": max_tokens
+            }
         }
 
         try:
@@ -50,12 +45,18 @@ class GeminiService:
 
             if response.status_code == 200:
                 data = response.json()
-                return data  # Возвращаем весь JSON-ответ для анализа
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        processed_text = parts[0].get("text", "").strip()
+                        return processed_text
+                print("Ошибка: Не удалось получить обработанный текст из ответа.")
             else:
                 print(f"Ошибка API: {response.status_code} - {response.text}")
-                return None
         except Exception as e:
             print(f"Ошибка при запросе к Gemini API: {e}")
-            return None
         finally:
             await self.client.aclose()
+
+        return None
