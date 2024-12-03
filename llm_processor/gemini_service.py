@@ -1,62 +1,54 @@
 import httpx
-from httpx_socks import AsyncProxyTransport
+from httpx_socks import SyncProxyTransport
 from config import GEMINI_API_KEY, PROXY_URL
 
 class GeminiService:
     def __init__(self):
-        if not GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY отсутствует. Проверьте файл .env.")
-
-        if not PROXY_URL:
-            raise ValueError("PROXY_URL отсутствует. Проверьте файл .env.")
-
-        self.transport = AsyncProxyTransport.from_url(PROXY_URL)
-        self.client = httpx.AsyncClient(transport=self.transport)
-
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-
-    async def send_request(self, system_prompt: str, user_prompt: str, temperature: float = 0.0, max_tokens: int = 8000):
         """
-        Отправляет запрос в Gemini API.
+        Инициализация сервиса Gemini с поддержкой SOCKS-прокси.
+        """
+        if not GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY отсутствует. Проверьте файл config.py.")
+        if not PROXY_URL:
+            raise ValueError("PROXY_URL отсутствует. Проверьте файл config.py.")
+
+        self.api_key = GEMINI_API_KEY
+        self.proxy_url = PROXY_URL
+
+        # Настраиваем прокси
+        self.transport = SyncProxyTransport.from_url(self.proxy_url)
+        self.client = httpx.Client(transport=self.transport)
+
+    def process_text(self, system_prompt: str, user_prompt: str, temperature: float = 0.0, max_output_tokens: int = 8000):
+        """
+        Обрабатывает текст через Gemini API с использованием SOCKS-прокси.
         :param system_prompt: Системный запрос для настройки модели.
-        :param user_prompt: Пользовательский запрос (текст, требующий обработки).
+        :param user_prompt: Пользовательский текст для обработки.
         :param temperature: Параметр температуры (отвечает за креативность).
-        :param max_tokens: Максимальное количество токенов в ответе.
+        :param max_output_tokens: Максимальное количество токенов в ответе.
         :return: Обработанный текст или None в случае ошибки.
         """
-        params = {"key": GEMINI_API_KEY}
-        headers = {"Content-Type": "application/json"}
-
-        payload = {
-            "contents": [{"parts": [{"text": system_prompt}, {"text": user_prompt}]}],
-            "generationConfig": {
-                "temperature": temperature,
-                "maxOutputTokens": max_tokens
-            }
+        generation_config = {
+            "temperature": temperature,
+            "max_output_tokens": max_output_tokens,
         }
 
+        # Выполняем запрос через httpx клиент
         try:
-            print("Отправка запроса в Gemini API...")
-            print(f"Payload: {payload}")
-
-            response = await self.client.post(self.base_url, headers=headers, params=params, json=payload)
-            print(f"HTTP Status: {response.status_code}")
-            print(f"Response Text: {response.text}")
+            response = self.client.post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                params={"key": self.api_key},  # Передаем API-ключ в параметре URL
+                headers={"Content-Type": "application/json"},
+                json={
+                    "generationConfig": generation_config,
+                    "contents": [{"parts": [{"text": system_prompt}, {"text": user_prompt}]}]
+                },
+            )
 
             if response.status_code == 200:
-                data = response.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        processed_text = parts[0].get("text", "").strip()
-                        return processed_text
-                print("Ошибка: Не удалось получить обработанный текст из ответа.")
+                return response.json()
             else:
                 print(f"Ошибка API: {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"Ошибка при запросе к Gemini API: {e}")
-        finally:
-            await self.client.aclose()
-
-        return None
+            print(f"Ошибка при запросе к Gemini API через прокси: {e}")
+            return None
