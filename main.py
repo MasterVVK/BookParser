@@ -6,7 +6,7 @@ from database.models import session, Book
 if __name__ == '__main__':
     start_url = 'https://wuxiaworld.ru/imperator-syanvu/kontrataka-izgnannogo-uchenika-glava-1-uchenik-sekty/'
     book_title = 'Контратака изгнанного ученика'
-    max_chapters = 3  # Указываем максимальное количество глав
+    max_chapters = 5  # Указываем максимальное количество глав
 
     # Список текстов, которые нужно исключить при парсинге
     excluded_texts = [
@@ -25,8 +25,8 @@ if __name__ == '__main__':
         book = DatabaseManager.save_book_to_db(book_title, start_url, max_chapters, excluded_texts)
 
     # Запуск парсинга
-    #book_parser = BookParser(start_url, book_title, max_chapters=max_chapters)
-    #book_parser.parse_book()
+    book_parser = BookParser(start_url, book_title, max_chapters=max_chapters)
+    book_parser.parse_book()
 
     # Проверка наличия обработанных глав
     processed_chapters = DatabaseManager.get_processed_chapters(book.id) if hasattr(DatabaseManager, 'get_processed_chapters') else []
