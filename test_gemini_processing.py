@@ -1,4 +1,4 @@
-from llm_processor.gemini_service import GeminiService
+from llm_processor.gemini_pro_service import GeminiService
 
 def main():
     # Создаем экземпляр сервиса

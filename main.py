@@ -5,7 +5,7 @@ from database.models import session, Book
 
 if __name__ == '__main__':
     start_url = 'https://wuxiaworld.ru/imperator-syanvu/kontrataka-izgnannogo-uchenika-glava-1-uchenik-sekty/'
-    book_title = 'Контратака изгнанного ученика'
+    book_title = 'Контратака изгнанного ученика Pro'
     max_chapters = 3365  # Указываем максимальное количество глав
 
     # Список текстов, которые нужно исключить при парсинге
