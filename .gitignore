@@ -160,3 +160,4 @@ cython_debug/
 .idea/
 books.db
 *.epub
+scripts/request_counter.txt
