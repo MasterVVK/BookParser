@@ -29,8 +29,8 @@ if __name__ == '__main__':
     #book_parser.parse_book()
 
     # Проверка наличия обработанных глав
-    #processed_chapters = DatabaseManager.get_processed_chapters(book.id) if hasattr(DatabaseManager, 'get_processed_chapters') else []
-    processed_chapters = []
+    processed_chapters = DatabaseManager.get_processed_chapters(book.id) if hasattr(DatabaseManager, 'get_processed_chapters') else []
+    #processed_chapters = []
     if processed_chapters:
         print(f'Обработанные главы найдены ({len(processed_chapters)}). Начинается экспорт...')
         # Экспорт обработанных глав в формат EPUB

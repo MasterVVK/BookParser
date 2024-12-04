@@ -1,5 +1,6 @@
 import time
 import os
+import httpx
 from llm_processor.gemini_pro_service import GeminiService
 from database.database_manager import DatabaseManager
 
@@ -93,12 +94,24 @@ def process_chapters(book_id):
         tokens_used += current_tokens
 
         # Отправляем запрос в Gemini
-        response = gemini.process_text(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            temperature=0.0,
-            max_output_tokens=8000
-        )
+        response = None
+        try:
+            response = gemini.process_text(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=0.0,
+                max_output_tokens=8000
+            )
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                print("Ошибка API: Достигнут лимит запросов. Скрипт остановлен.")
+                exit(1)  # Завершаем выполнение
+            else:
+                print(f"HTTP ошибка {e.response.status_code}: {e.response.text}")
+                continue
+        except Exception as e:
+            print(f"Ошибка при запросе: {e}")
+            continue
 
         if response:
             # Получаем обработанный текст
