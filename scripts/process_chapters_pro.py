@@ -53,7 +53,7 @@ def process_chapters(book_id):
     Обработка необработанных глав для указанной книги.
     :param book_id: ID книги.
     """
-    gemini = GeminiService()
+    gemini = GeminiService(timeout=60)  # Увеличенный тайм-аут
 
     # Получаем необработанные главы
     unprocessed_chapters = DatabaseManager.get_unprocessed_chapters(book_id)
@@ -114,10 +114,13 @@ def process_chapters(book_id):
             print(f"Gemini API не вернул ответа для главы {chapter.chapter_number}.")
 
         # Применяем ограничение на количество запросов в минуту
-        if tokens_used >= MAX_REQUESTS_PER_MINUTE:
-            wait_time = 60 - (time.time() - last_reset_time)
+        wait_time = max(0, 60 - (time.time() - last_reset_time))  # Убедиться, что wait_time >= 0
+        if wait_time > 0:
             print(f"Достигнут лимит запросов в минуту. Ожидание {wait_time:.2f} секунд.")
             time.sleep(wait_time)
+
+        # Фиксированная пауза между запросами
+        time.sleep(5)
 
 if __name__ == "__main__":
     # ID книги для обработки

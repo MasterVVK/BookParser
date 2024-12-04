@@ -2,7 +2,7 @@ from llm_processor.gemini_pro_service import GeminiService
 
 def main():
     # Создаем экземпляр сервиса
-    gemini = GeminiService()
+    gemini = GeminiService(240)
 
     # Системный запрос
     system_prompt = (

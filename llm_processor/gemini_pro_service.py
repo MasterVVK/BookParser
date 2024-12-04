@@ -3,7 +3,7 @@ from httpx_socks import SyncProxyTransport
 from config import GEMINI_API_KEY, PROXY_URL
 
 class GeminiService:
-    def __init__(self, timeout: int = 60):
+    def __init__(self, timeout: int = 30):
         """
         Инициализация сервиса Gemini с поддержкой SOCKS-прокси и пользовательским тайм-аутом.
         :param timeout: Тайм-аут для HTTP-запросов в секундах (по умолчанию 30 секунд).
