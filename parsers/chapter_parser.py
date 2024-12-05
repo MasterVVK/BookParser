@@ -1,10 +1,11 @@
-import time
 import os
+import time
 from fetcher.web_page_fetcher import WebPageFetcher
 from database.database_manager import DatabaseManager
 from bs4 import BeautifulSoup
 
-PROGRESS_FILE = "chapter_progress.txt"
+# Указываем путь к файлу прогресса внутри папки parsers
+PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "chapter_progress.txt")
 
 class ChapterParser:
     """Класс для парсинга глав книги."""
@@ -93,4 +94,3 @@ class ChapterParser:
             for unwanted_text in excluded_texts:
                 for unwanted in chapter_body_tag.find_all(string=lambda text: unwanted_text in text):
                     unwanted.extract()
-
