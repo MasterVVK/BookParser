@@ -54,7 +54,7 @@ def process_chapters(book_id):
     Обработка необработанных глав для указанной книги.
     :param book_id: ID книги.
     """
-    gemini = GeminiService(timeout=60)  # Увеличенный тайм-аут
+    gemini = GeminiService(timeout=240)  # Увеличенный тайм-аут
 
     # Получаем необработанные главы
     unprocessed_chapters = DatabaseManager.get_unprocessed_chapters(book_id)

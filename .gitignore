@@ -161,3 +161,4 @@ cython_debug/
 books.db
 *.epub
 scripts/request_counter.txt
+parsers/chapter_progress.txt
