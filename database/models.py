@@ -27,6 +27,8 @@ class Chapter(Base):
     chapter_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
+    url = Column(String, unique=True, nullable=False)  # URL текущей главы
+    next_url = Column(String, nullable=True)          # URL следующей главы
     processed_content = Column(Text, nullable=True)
     status = Column(Boolean, default=False)
     processed = Column(Boolean, default=False)
