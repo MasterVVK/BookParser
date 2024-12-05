@@ -7,7 +7,7 @@ from database.database_manager import DatabaseManager
 # Настройки лимитов
 MAX_REQUESTS_PER_MINUTE = 2
 MAX_TOKENS_PER_MINUTE = 32000
-MAX_REQUESTS_PER_DAY = 50
+MAX_REQUESTS_PER_DAY = 48
 REQUEST_COUNTER_FILE = "request_counter.txt"
 
 def enforce_rate_limits(tokens_used, last_reset_time, daily_requests):

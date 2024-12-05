@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 # Указываем путь к файлу прогресса внутри папки parsers
 PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "chapter_progress.txt")
 
+
 class ChapterParser:
     """Класс для парсинга глав книги."""
 
@@ -19,20 +20,26 @@ class ChapterParser:
     def load_progress(self):
         """Загружает сохранённый прогресс из файла."""
         if os.path.exists(PROGRESS_FILE):
-            with open(PROGRESS_FILE, "r") as file:
-                data = file.read().strip().split("|")
-                if len(data) == 2:
-                    self.current_url, chapter_number = data
-                    self.chapter_count = int(chapter_number) - 1
-                    print(f"Прогресс загружен: URL={self.current_url}, номер главы={chapter_number}")
+            try:
+                with open(PROGRESS_FILE, "r") as file:
+                    data = file.read().strip().split("|")
+                    if len(data) == 3:
+                        self.current_url, chapter_number, processed_count = data
+                        self.chapter_count = int(chapter_number) - 1
+                        print(f"Прогресс загружен: URL={self.current_url}, номер главы={chapter_number}, обработано={processed_count}")
+            except Exception as e:
+                print(f"Ошибка чтения файла прогресса: {e}")
         return self.current_url
 
     def save_progress(self):
         """Сохраняет текущий прогресс в файл."""
         if self.current_url:
-            with open(PROGRESS_FILE, "w") as file:
-                file.write(f"{self.current_url}|{self.chapter_count + 1}")
-                print(f"Прогресс сохранён: URL={self.current_url}, номер главы={self.chapter_count + 1}")
+            try:
+                with open(PROGRESS_FILE, "w") as file:
+                    file.write(f"{self.current_url}|{self.chapter_count + 1}|{self.chapter_count}")
+                    print(f"Прогресс сохранён: URL={self.current_url}, номер главы={self.chapter_count + 1}, обработано={self.chapter_count}")
+            except Exception as e:
+                print(f"Ошибка записи файла прогресса: {e}")
 
     def parse_chapter(self, url, book):
         """Парсинг одной главы и сохранение в базу данных."""
