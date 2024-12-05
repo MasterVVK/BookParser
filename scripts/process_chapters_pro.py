@@ -137,7 +137,7 @@ def process_chapters(book_id):
 
 if __name__ == "__main__":
     # ID книги для обработки
-    BOOK_ID = 2
+    BOOK_ID = 1
     try:
         process_chapters(BOOK_ID)
     except RuntimeError as e:
