@@ -24,7 +24,7 @@ class GeminiService:
     def switch_to_next_key(self):
         """Переключает на следующий API-ключ."""
         self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-        print(f"Переключение на следующий ключ: {self.current_key}")
+        print(f"Переключение на следующий ключ: GEMINI_API_KEY={self.current_key}")
 
     def process_text(self, system_prompt: str, user_prompt: str, temperature: float = 0.0, max_output_tokens: int = 8000):
         """Обрабатывает текст через Gemini API с использованием нескольких ключей."""
@@ -51,6 +51,11 @@ class GeminiService:
                 elif response.status_code == 429:  # Лимит исчерпан
                     print(f"Ключ {self.current_key} исчерпан. Переключение на следующий ключ.")
                     self.switch_to_next_key()
+
+                elif response.status_code == 400 and "API_KEY_INVALID" in response.text:
+                    print(f"Ошибка API: Неверный ключ {self.current_key}. Скрипт остановлен.")
+                    exit(1)  # Завершение работы при ошибке ключа
+
                 else:
                     print(f"Ошибка API: {response.status_code} - {response.text}")
                     return None
@@ -59,5 +64,5 @@ class GeminiService:
                 print(f"Ошибка при запросе: {e}")
                 return None
 
-        print("Все API-ключи исчерпаны.")
+        print("Все API-ключи исчерпаны или недействительны.")
         return None
