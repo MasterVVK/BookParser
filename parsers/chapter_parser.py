@@ -1,8 +1,10 @@
 import time
+import os
 from fetcher.web_page_fetcher import WebPageFetcher
 from database.database_manager import DatabaseManager
-from llm_processor.llm_processor import LLMProcessor
 from bs4 import BeautifulSoup
+
+PROGRESS_FILE = "chapter_progress.txt"
 
 class ChapterParser:
     """Класс для парсинга глав книги."""
@@ -11,6 +13,20 @@ class ChapterParser:
         self.max_chapters = max_chapters
         self.chapter_count = 0
         self.delay = delay  # Задержка между запросами
+        self.current_url = None
+
+    def load_progress(self):
+        """Загружает сохранённый прогресс из файла."""
+        if os.path.exists(PROGRESS_FILE):
+            with open(PROGRESS_FILE, "r") as file:
+                self.current_url = file.read().strip()
+        return self.current_url
+
+    def save_progress(self):
+        """Сохраняет текущий прогресс в файл."""
+        if self.current_url:
+            with open(PROGRESS_FILE, "w") as file:
+                file.write(self.current_url)
 
     def parse_chapter(self, url, book):
         """Парсинг одной главы и сохранение в базу данных."""
@@ -43,16 +59,14 @@ class ChapterParser:
                     content=chapter_body
                 )
 
-                # Обрабатываем текст главы через LLM
-                #processed_content = LLMProcessor.process_text(chapter_body)
-
-                # Обновляем статус и сохраняем обработанный текст
-                #DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
-
                 self.chapter_count += 1
                 print(f'Глава "{chapter_title}" успешно добавлена.')
             else:
                 print(f'Текст главы не найден для {url}')
+
+            # Сохраняем текущий прогресс
+            self.current_url = url
+            self.save_progress()
 
             # Найти URL следующей главы (кнопка с rel="Вперед")
             next_button = soup.find('a', rel='Вперед')

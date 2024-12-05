@@ -4,7 +4,7 @@ from database.database_manager import DatabaseManager
 class BookParser:
     """Класс для парсинга книги."""
 
-    def __init__(self, start_url, book_title, max_chapters=10, delay=3):
+    def __init__(self, start_url, book_title, max_chapters=10, delay=2):
         self.start_url = start_url
         self.book_title = book_title
         self.max_chapters = max_chapters
