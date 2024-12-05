@@ -1,139 +1,88 @@
-import time
-import os
-import httpx
 from llm_processor.gemini_pro_service import GeminiService
 from database.database_manager import DatabaseManager
+import time
+import os
 
-# Настройки лимитов
-MAX_REQUESTS_PER_MINUTE = 2
-MAX_TOKENS_PER_MINUTE = 32000
-MAX_REQUESTS_PER_DAY = 48
 REQUEST_COUNTER_FILE = "request_counter.txt"
-
-def enforce_rate_limits(tokens_used, last_reset_time, daily_requests):
-    """
-    Управление лимитами API (запросы и токены).
-    :param tokens_used: Количество токенов, использованных за текущую минуту.
-    :param last_reset_time: Время последнего сброса лимитов.
-    :param daily_requests: Текущее количество запросов за сутки.
-    :return: Обновлённое количество токенов, время последнего сброса и дневной счётчик запросов.
-    """
-    current_time = time.time()
-
-    # Сброс лимитов раз в минуту
-    if current_time - last_reset_time >= 60:
-        tokens_used = 0
-        last_reset_time = current_time
-
-    # Сброс лимита запросов раз в сутки
-    if daily_requests >= MAX_REQUESTS_PER_DAY:
-        raise RuntimeError("Достигнут лимит запросов в сутки (50). Попробуйте снова завтра.")
-
-    return tokens_used, last_reset_time, daily_requests
+MAX_REQUESTS_PER_MINUTE = 2  # Ограничение на запросы в минуту
 
 def load_request_counter():
-    """
-    Загружает дневной счётчик запросов из файла. Если файл не найден, создаёт новый.
-    """
+    """Загружает время последнего сброса лимита."""
     if os.path.exists(REQUEST_COUNTER_FILE):
         with open(REQUEST_COUNTER_FILE, "r") as file:
-            timestamp, daily_requests = file.read().strip().split(",")
-            return float(timestamp), int(daily_requests)
-    else:
-        return time.time(), 0
+            last_reset_time = float(file.read().strip())
+            return last_reset_time
+    return time.time()
 
-def save_request_counter(timestamp, daily_requests):
-    """
-    Сохраняет дневной счётчик запросов в файл.
-    """
+def save_request_counter(last_reset_time):
+    """Сохраняет время последнего сброса лимита."""
     with open(REQUEST_COUNTER_FILE, "w") as file:
-        file.write(f"{timestamp},{daily_requests}")
+        file.write(f"{last_reset_time}")
+
+def enforce_minute_limit(last_reset_time, request_count):
+    """
+    Соблюдает ограничение запросов в минуту.
+    """
+    current_time = time.time()
+    if current_time - last_reset_time < 60 and request_count >= MAX_REQUESTS_PER_MINUTE:
+        wait_time = 60 - (current_time - last_reset_time)
+        print(f"Достигнут лимит запросов в минуту. Ожидание {wait_time:.2f} секунд.")
+        time.sleep(wait_time)
+        last_reset_time = time.time()
+        request_count = 0
+    elif current_time - last_reset_time >= 60:
+        # Сбрасываем лимиты, если минута прошла
+        last_reset_time = time.time()
+        request_count = 0
+    return last_reset_time, request_count
 
 def process_chapters(book_id):
     """
     Обработка необработанных глав для указанной книги.
-    :param book_id: ID книги.
     """
-    gemini = GeminiService(timeout=240)  # Увеличенный тайм-аут
-
-    # Получаем необработанные главы
+    gemini = GeminiService(timeout=240)
     unprocessed_chapters = DatabaseManager.get_unprocessed_chapters(book_id)
-
     if not unprocessed_chapters:
-        print(f"Нет необработанных глав для книги с ID {book_id}.")
+        print(f"Нет необработанных глав для книги {book_id}.")
         return
 
-    tokens_used = 0
-    last_reset_time = time.time()
-
-    # Загружаем дневной счётчик запросов
-    last_day_reset, daily_requests = load_request_counter()
+    last_reset_time = load_request_counter()
+    request_count = 0
 
     for chapter in unprocessed_chapters:
-        # Проверяем, нужно ли сбросить дневной счётчик
-        if time.time() - last_day_reset >= 86400:  # 24 часа
-            daily_requests = 0
-            last_day_reset = time.time()
-
-        # Применяем лимиты
-        tokens_used, last_reset_time, daily_requests = enforce_rate_limits(
-            tokens_used, last_reset_time, daily_requests
-        )
-
         print(f"Обработка главы {chapter.chapter_number}: {chapter.title}...")
 
-        # Загрузка системного запроса из файла
+        # Соблюдаем ограничение запросов в минуту
+        last_reset_time, request_count = enforce_minute_limit(last_reset_time, request_count)
+
+        # Формирование запроса
         with open("system_prompt.txt", "r", encoding="utf-8") as file:
             system_prompt = file.read()
 
-        # Формирование пользовательского запроса
         user_prompt = f"Here is the Russian text that needs improvement:\n{chapter.content}"
-
-        # Подсчет токенов для текущего запроса
-        current_tokens = len(system_prompt.split()) + len(user_prompt.split())
-        tokens_used += current_tokens
-
-        # Отправляем запрос в Gemini
-        response = None
-        try:
-            response = gemini.process_text(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                temperature=0.0,
-                max_output_tokens=8000
-            )
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 429:
-                print("Ошибка API: Достигнут лимит запросов. Скрипт остановлен.")
-                exit(1)  # Завершаем выполнение
-            else:
-                print(f"HTTP ошибка {e.response.status_code}: {e.response.text}")
-                continue
-        except Exception as e:
-            print(f"Ошибка при запросе: {e}")
-            continue
+        response = gemini.process_text(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=0.0,
+            max_output_tokens=8000
+        )
 
         if response:
-            # Получаем обработанный текст
             processed_content = response.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', None)
             if processed_content:
-                print(f"Глава {chapter.chapter_number} обработана.")
                 DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
-                daily_requests += 1
-                save_request_counter(last_day_reset, daily_requests)  # Обновляем счётчик запросов
+                print(f"Глава {chapter.chapter_number} обработана.")
             else:
-                print(f"Не удалось обработать главу {chapter.chapter_number}.")
+                print(f"Ошибка обработки главы {chapter.chapter_number}.")
         else:
             print(f"Gemini API не вернул ответа для главы {chapter.chapter_number}.")
 
-        # Применяем ограничение на количество запросов в минуту
-        wait_time = max(0, 60 - (time.time() - last_reset_time))  # Убедиться, что wait_time >= 0
-        if wait_time > 0:
-            print(f"Достигнут лимит запросов в минуту. Ожидание {wait_time:.2f} секунд.")
-            time.sleep(wait_time)
+        # Увеличиваем счётчик запросов и сохраняем время последнего сброса
+        request_count += 1
+        save_request_counter(last_reset_time)
 
-        # Фиксированная пауза между запросами
-        time.sleep(5)
+        # Фиксированная пауза между запросами для стабильности
+        time.sleep(1)
 
 if __name__ == "__main__":
     # ID книги для обработки
@@ -141,4 +90,4 @@ if __name__ == "__main__":
     try:
         process_chapters(BOOK_ID)
     except RuntimeError as e:
-        print(f"Ошибка лимита: {e}")
+        print(f"Ошибка: {e}")
