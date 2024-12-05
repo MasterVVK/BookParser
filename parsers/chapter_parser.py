@@ -20,14 +20,19 @@ class ChapterParser:
         """Загружает сохранённый прогресс из файла."""
         if os.path.exists(PROGRESS_FILE):
             with open(PROGRESS_FILE, "r") as file:
-                self.current_url = file.read().strip()
+                data = file.read().strip().split("|")
+                if len(data) == 2:
+                    self.current_url, chapter_number = data
+                    self.chapter_count = int(chapter_number) - 1
+                    print(f"Прогресс загружен: URL={self.current_url}, номер главы={chapter_number}")
         return self.current_url
 
     def save_progress(self):
         """Сохраняет текущий прогресс в файл."""
         if self.current_url:
             with open(PROGRESS_FILE, "w") as file:
-                file.write(self.current_url)
+                file.write(f"{self.current_url}|{self.chapter_count + 1}")
+                print(f"Прогресс сохранён: URL={self.current_url}, номер главы={self.chapter_count + 1}")
 
     def parse_chapter(self, url, book):
         """Парсинг одной главы и сохранение в базу данных."""
