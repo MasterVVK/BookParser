@@ -1,6 +1,7 @@
 import httpx
 from httpx_socks import SyncProxyTransport
 from config import GEMINI_API_KEYS, PROXY_URL
+import sys  # Для явного завершения программы
 
 class GeminiService:
     def __init__(self, timeout: int = 30):
@@ -53,8 +54,8 @@ class GeminiService:
                     self.switch_to_next_key()
 
                 elif response.status_code == 400 and "API_KEY_INVALID" in response.text:
-                    print(f"Ошибка API: Неверный ключ {self.current_key}. Скрипт остановлен.")
-                    exit(1)  # Завершение работы при ошибке ключа
+                    print(f"Ошибка API: Неверный ключ {self.current_key}. Пропускаем.")
+                    self.switch_to_next_key()
 
                 else:
                     print(f"Ошибка API: {response.status_code} - {response.text}")
@@ -64,5 +65,6 @@ class GeminiService:
                 print(f"Ошибка при запросе: {e}")
                 return None
 
-        print("Все API-ключи исчерпаны или недействительны.")
-        return None
+        # Если все ключи исчерпаны или недействительны, завершаем выполнение
+        print("Все API-ключи исчерпаны или недействительны. Скрипт завершён.")
+        sys.exit(1)  # Явное завершение программы
