@@ -68,11 +68,15 @@ def process_chapters(book_id):
                 max_output_tokens=8000
             )
 
-            # Добавлено логирование для анализа структуры ответа
-            if response:
-                print(f"Ответ API для главы {chapter.chapter_number}: {response}")
-            else:
-                print(f"Gemini API вернул None для главы {chapter.chapter_number}.")
+            # Проверяем на запрещённый контент
+            if response and response.get('promptFeedback', {}).get('blockReason') == 'PROHIBITED_CONTENT':
+                print(f"Запрещённый контент в главе {chapter.chapter_number}: {chapter.title}")
+
+                # Сохраняем необработанный текст в поле processed_content
+                DatabaseManager.mark_chapter_as_blocked(chapter.id)
+
+                print(f"Исходный текст главы {chapter.chapter_number} сохранён без обработки.")
+                continue  # Переходим к следующей главе
 
             # Проверяем структуру ответа
             if response and 'candidates' in response:
@@ -82,14 +86,8 @@ def process_chapters(book_id):
                     print(f"Глава {chapter.chapter_number} обработана.")
                 else:
                     print(f"Ошибка обработки главы {chapter.chapter_number}: пустое содержимое.")
-                    with open("processing_error_log.txt", "a") as log_file:
-                        log_file.write(f"Пустое содержимое для главы {chapter.chapter_number}: {chapter.title}\n")
             else:
                 print(f"Ошибка структуры ответа для главы {chapter.chapter_number}.")
-                with open("processing_error_log.txt", "a") as log_file:
-                    log_file.write(f"Ошибка структуры ответа для главы {chapter.chapter_number}: {chapter.title}\n")
-                    log_file.write(f"Ответ: {response}\n")
-                    log_file.write("====\n")
 
         except Exception as e:
             print(f"Ошибка при обработке главы {chapter.chapter_number}: {e}")

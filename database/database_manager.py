@@ -88,3 +88,12 @@ class DatabaseManager:
             query = query.filter(Chapter.chapter_number <= end_chapter)
         chapters = query.all()
         return [(chapter.title, chapter.processed_content) for chapter in chapters]
+
+    @staticmethod
+    def mark_chapter_as_blocked(chapter_id):
+        """Отметить главу как заблокированную и сохранить исходный текст."""
+        chapter = session.query(Chapter).filter_by(id=chapter_id).first()
+        if chapter:
+            chapter.blocked = True
+            chapter.processed_content = chapter.content  # Сохраняем исходный текст
+            session.commit()

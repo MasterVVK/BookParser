@@ -32,6 +32,7 @@ class Chapter(Base):
     processed_content = Column(Text, nullable=True)
     status = Column(Boolean, default=False)
     processed = Column(Boolean, default=False)
+    blocked = Column(Boolean, default=False)
 
     book = relationship("Book", back_populates="chapters")
 
