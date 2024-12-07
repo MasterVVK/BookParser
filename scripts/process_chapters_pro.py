@@ -67,19 +67,34 @@ def process_chapters(book_id):
                 temperature=0.0,
                 max_output_tokens=8000
             )
+
+            # Добавлено логирование для анализа структуры ответа
             if response:
+                print(f"Ответ API для главы {chapter.chapter_number}: {response}")
+            else:
+                print(f"Gemini API вернул None для главы {chapter.chapter_number}.")
+
+            # Проверяем структуру ответа
+            if response and 'candidates' in response:
                 processed_content = response.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', None)
                 if processed_content:
                     DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
                     print(f"Глава {chapter.chapter_number} обработана.")
                 else:
-                    print(f"Ошибка обработки главы {chapter.chapter_number}.")
+                    print(f"Ошибка обработки главы {chapter.chapter_number}: пустое содержимое.")
+                    with open("processing_error_log.txt", "a") as log_file:
+                        log_file.write(f"Пустое содержимое для главы {chapter.chapter_number}: {chapter.title}\n")
             else:
-                print(f"Gemini API не вернул ответа для главы {chapter.chapter_number}.")
+                print(f"Ошибка структуры ответа для главы {chapter.chapter_number}.")
+                with open("processing_error_log.txt", "a") as log_file:
+                    log_file.write(f"Ошибка структуры ответа для главы {chapter.chapter_number}: {chapter.title}\n")
+                    log_file.write(f"Ответ: {response}\n")
+                    log_file.write("====\n")
+
         except Exception as e:
-            print(f"Ошибка при запросе к API для главы {chapter.chapter_number}: {e}")
+            print(f"Ошибка при обработке главы {chapter.chapter_number}: {e}")
             with open("api_error_log.txt", "a") as error_log:
-                error_log.write(f"Ошибка API для главы {chapter.chapter_number}: {chapter.title}\n")
+                error_log.write(f"Глава {chapter.chapter_number} вызвала исключение: {chapter.title}\n")
                 error_log.write(f"Текст ошибки: {e}\n")
                 error_log.write("====\n")
 
