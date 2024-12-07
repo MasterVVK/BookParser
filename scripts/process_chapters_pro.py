@@ -60,22 +60,28 @@ def process_chapters(book_id):
             system_prompt = file.read()
 
         user_prompt = f"Here is the Russian text that needs improvement:\n{chapter.content}"
-        response = gemini.process_text(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            temperature=0.0,
-            max_output_tokens=8000
-        )
-
-        if response:
-            processed_content = response.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', None)
-            if processed_content:
-                DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
-                print(f"Глава {chapter.chapter_number} обработана.")
+        try:
+            response = gemini.process_text(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=0.0,
+                max_output_tokens=8000
+            )
+            if response:
+                processed_content = response.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', None)
+                if processed_content:
+                    DatabaseManager.mark_chapter_as_processed(chapter.id, processed_content)
+                    print(f"Глава {chapter.chapter_number} обработана.")
+                else:
+                    print(f"Ошибка обработки главы {chapter.chapter_number}.")
             else:
-                print(f"Ошибка обработки главы {chapter.chapter_number}.")
-        else:
-            print(f"Gemini API не вернул ответа для главы {chapter.chapter_number}.")
+                print(f"Gemini API не вернул ответа для главы {chapter.chapter_number}.")
+        except Exception as e:
+            print(f"Ошибка при запросе к API для главы {chapter.chapter_number}: {e}")
+            with open("api_error_log.txt", "a") as error_log:
+                error_log.write(f"Ошибка API для главы {chapter.chapter_number}: {chapter.title}\n")
+                error_log.write(f"Текст ошибки: {e}\n")
+                error_log.write("====\n")
 
         # Увеличиваем счётчик запросов и сохраняем время последнего сброса
         request_count += 1
