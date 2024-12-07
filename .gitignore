@@ -164,3 +164,4 @@ scripts/request_counter.txt
 parsers/chapter_progress.txt
 *.db
 scripts/processing_error_log.txt
+database/books.db-journal
