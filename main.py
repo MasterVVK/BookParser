@@ -25,8 +25,8 @@ if __name__ == '__main__':
         book = DatabaseManager.save_book_to_db(book_title, start_url, max_chapters, excluded_texts)
 
     # Запуск парсинга
-    book_parser = BookParser(start_url, book_title, max_chapters=max_chapters)
-    book_parser.parse_book()
+    #book_parser = BookParser(start_url, book_title, max_chapters=max_chapters)
+    #book_parser.parse_book()
 
     # Проверка наличия обработанных глав
     processed_chapters = DatabaseManager.get_processed_chapters(book.id) if hasattr(DatabaseManager, 'get_processed_chapters') else []
