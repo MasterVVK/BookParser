@@ -95,5 +95,6 @@ class DatabaseManager:
         chapter = session.query(Chapter).filter_by(id=chapter_id).first()
         if chapter:
             chapter.blocked = True
+            chapter.processed = True
             chapter.processed_content = chapter.content  # Сохраняем исходный текст
             session.commit()
